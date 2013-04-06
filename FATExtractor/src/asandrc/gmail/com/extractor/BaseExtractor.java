@@ -7,8 +7,8 @@ public abstract class BaseExtractor {
     
     public abstract void openFAT(String path);
     
-    public abstract List<File> getFiles(String path);
+    public abstract void getFiles(String path);
     
-    public abstract File getFile(String path);    
+    public abstract void getFile(String path);    
     
 }
