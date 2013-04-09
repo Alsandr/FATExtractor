@@ -11,6 +11,6 @@ public class FATExtractor {
     public static void main(String[] args) throws IOException {
         FAT32Extractor f32Extractor = new FAT32Extractor();
         f32Extractor.openFAT("D:/imageFAT32.fat32");
-        f32Extractor.init();
+        f32Extractor.init();        
     }
 }
