@@ -1,10 +1,12 @@
 package asandrc.gmail.com.extractor;
 
+import asandrc.gmail.com.data.FAT32Element;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,11 +36,14 @@ public class FAT32Extractor  extends BaseExtractor{
     
     private Integer thisFATSecNum;
     private Integer thisFATEntOffset;
+    private Integer endOfClusterchain;
     
     private Integer RootDirSectors;
     
     private File image;
     private FileInputStream fs;
+    
+    private List<FAT32Element> FAT32Elements;
     
     /**
      * Метод открытия файла (образа) файловой системы
@@ -65,25 +70,25 @@ public class FAT32Extractor  extends BaseExtractor{
      */    
     public void init() throws IOException {
         getImageBytes();
-        getBS_OEMNAME();
-        getBPB_BytsPerSec();
-        getBPB_SecPerClus();
-        getBPB_ReservedSecCnt();
-        getBPB_NumFATs();
-        getBPB_FATSz16();
-        getBPB_RootEntCnt();
-        getBPB_TotSec16();
-        getBPB_TotSec32();
-        getBPB_FATSz32();
+        calsBS_OEMNAME();
+        calcBPB_BytsPerSec();
+        calcBPB_SecPerClus();
+        calcBPB_ReservedSecCnt();
+        calcBPB_NumFATs();
+        calcBPB_FATSz16();
+        calcBPB_RootEntCnt();
+        calcBPB_TotSec16();
+        calcBPB_TotSec32();
+        calcBPB_FATSz32();
         calcFATSz();
-        getBPB_FSVer();
-        getBPB_RootClus();
-        getBPB_FilSysType();
+        calcBPB_FSVer();
+        calcBPB_RootClus();
+        calcBPB_FilSysType();
         calcRootDirSectors();
         firstDataSector();
         calcDataSecCnt();
         calcCountOfClusters();
-        getTypeOfFileSytmes();        
+        calcTypeOfFileSytmes();        
     }
     
     /**
@@ -96,7 +101,7 @@ public class FAT32Extractor  extends BaseExtractor{
     }
     
     /**
-     * Преобразует массив байтов в целое ччисло
+     * Преобразует массив байтов в целое число
      * @param bytes
      * @return 
      */
@@ -114,7 +119,7 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение строки имени системы, какой был отформатирована файловая система
      * @throws IOException 
      */
-    private String getBS_OEMNAME() throws IOException {
+    private String calsBS_OEMNAME() throws IOException {
         byte[] bTemp = new byte[8];
         for (int i = 3;i < 11; i++) {
             bTemp[i-3] = imageBytes[i];
@@ -128,13 +133,13 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение количества байтов в секторе
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_BytsPerSec() throws UnsupportedEncodingException {
+    private Integer calcBPB_BytsPerSec() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[2];
         for (int i = 11;i < 13; i++) {
             bTemp[i-11] = imageBytes[i];
         }        
         BPB_BytsPerSec = byteArrayToInt(bTemp);
-        System.out.println(BPB_BytsPerSec);
+        System.out.println("BPB_BytsPerSec = " + BPB_BytsPerSec);
         return BPB_BytsPerSec;
     }
     
@@ -142,13 +147,13 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение количества секторов в кластере
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_SecPerClus() throws UnsupportedEncodingException {
+    private Integer calcBPB_SecPerClus() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[1];
         for (int i = 13;i < 14; i++) {
             bTemp[i-13] = imageBytes[i];
         }        
         BPB_SecPerClus = byteArrayToInt(bTemp);
-        System.out.println(BPB_SecPerClus);
+        System.out.println("BPB_SecPerClus = " + BPB_SecPerClus);
         return BPB_SecPerClus;
     }
     
@@ -156,7 +161,7 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение количества секторов в Reserved region
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_ReservedSecCnt() throws UnsupportedEncodingException {
+    private Integer calcBPB_ReservedSecCnt() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[2];
         for (int i = 14;i < 16; i++) {
             bTemp[i-14] = imageBytes[i];
@@ -170,18 +175,18 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение количесвта FAT таблиц на диске
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_NumFATs() throws UnsupportedEncodingException {
+    private Integer calcBPB_NumFATs() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[1];
         for (int i = 16;i < 17; i++) {
             bTemp[i-16] = imageBytes[i];
         }        
         BPB_NumFATs = byteArrayToInt(bTemp);
-        System.out.println(BPB_NumFATs);
+        System.out.println("BPB_NumFATs = " + BPB_NumFATs);
         return BPB_NumFATs;
     }
     
     
-    private Integer getBPB_RootEntCnt() throws UnsupportedEncodingException {
+    private Integer calcBPB_RootEntCnt() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[2];
         for (int i = 17;i < 19; i++) {
             bTemp[i-17] = imageBytes[i];
@@ -195,7 +200,7 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение количества секторов одной FAT (для FAT12/FAT16)
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_FATSz16() throws UnsupportedEncodingException {
+    private Integer calcBPB_FATSz16() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[2];
         for (int i = 22;i < 24; i++) {
             bTemp[i-22] = imageBytes[i];
@@ -205,7 +210,7 @@ public class FAT32Extractor  extends BaseExtractor{
         return BPB_FATSz16;
     }
     
-    private Integer getBPB_TotSec16() {
+    private Integer calcBPB_TotSec16() {
         byte[] bTemp = new byte[2];
         for (int i = 19;i < 21; i++) {
             bTemp[i-19] = imageBytes[i];
@@ -219,7 +224,7 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение общего количества секторов на диске (для FAT32)
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_TotSec32() throws UnsupportedEncodingException {
+    private Integer calcBPB_TotSec32() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[4];
         for (int i = 32;i < 36; i++) {
             bTemp[i-32] = imageBytes[i];
@@ -233,13 +238,13 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение количества секторов одной FAT (для FAT32)
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_FATSz32() throws UnsupportedEncodingException {
+    private Integer calcBPB_FATSz32() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[4];
         for (int i = 36;i < 40; i++) {
             bTemp[i-36] = imageBytes[i];
         }        
         BPB_FATSz32 = byteArrayToInt(bTemp);
-        System.out.println(BPB_FATSz32);
+        System.out.println("FATSz32 = " + BPB_FATSz32);
         return BPB_FATSz32;
     }
     
@@ -248,7 +253,7 @@ public class FAT32Extractor  extends BaseExtractor{
      * младший - номер промежуточной версии)
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_FSVer() throws UnsupportedEncodingException {
+    private Integer calcBPB_FSVer() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[2];
         for (int i = 42;i < 44; i++) {
             bTemp[i-42] = imageBytes[i];
@@ -262,7 +267,7 @@ public class FAT32Extractor  extends BaseExtractor{
      * Полечение номера первого кластера корневой директории
      * @throws UnsupportedEncodingException 
      */
-    private Integer getBPB_RootClus() throws UnsupportedEncodingException {
+    private Integer calcBPB_RootClus() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[4];
         for (int i = 44;i < 48; i++) {
             bTemp[i-44] = imageBytes[i];
@@ -276,7 +281,7 @@ public class FAT32Extractor  extends BaseExtractor{
      * Получение строки "FAT32  " - не используется для определения FAT
      * @throws UnsupportedEncodingException 
      */
-    private String getBPB_FilSysType() throws UnsupportedEncodingException {
+    private String calcBPB_FilSysType() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[8];
         for (int i = 82;i < 90; i++) {
             bTemp[i-82] = imageBytes[i];
@@ -340,13 +345,16 @@ public class FAT32Extractor  extends BaseExtractor{
     /**
      * Определение типа файловой системы
      */
-    private String getTypeOfFileSytmes() {
+    private String calcTypeOfFileSytmes() {
         if (countOfClusters < 4085) {
             typeOfFileSystem = "FAT12";
+            endOfClusterchain = 0x0FF8;
         } else if (countOfClusters < 65525) {
             typeOfFileSystem = "FAT16";
+            endOfClusterchain = 0xFFF8;
         } else {
             typeOfFileSystem = "FAT32";
+            endOfClusterchain = 0x0FFFFFF8;
         }
         System.out.println(typeOfFileSystem);
         return typeOfFileSystem;
@@ -379,9 +387,40 @@ public class FAT32Extractor  extends BaseExtractor{
         return thisFATEntOffset;
     }
     
-    @Override
-    public void getFiles(String path) {
+    public void searchFAT32Element() throws UnsupportedEncodingException {
+        FAT32Elements = new ArrayList<>();
+        System.out.println(imageBytes.length);
         
+        // первый байт FAT области
+        int firstDataByte = firstDataSector * BPB_BytsPerSec - 512;
+        System.out.println("firstDataByte = " + firstDataByte);
+        
+        // количество байт FAT области
+        int FAT32BytesCnt = BPB_FATSz32 * (BPB_BytsPerSec / 8);
+        System.out.println("FAT32BytesCnt = " + FAT32BytesCnt);
+                
+        for (int i = firstDataByte; i < (firstDataByte + FAT32BytesCnt); i+=32) {
+            byte[] bTemp = new byte[32];
+            for (int j = i; j < (i + 32); j++) {                
+                bTemp[j-i] = imageBytes[j];
+            }
+            if ((bTemp[0] != 0) && (bTemp[0] != 0xE5)) {
+                FAT32Element f32El = new FAT32Element(bTemp);                
+                FAT32Elements.add(f32El);
+            } else {
+
+            }
+        }
+        System.out.println("FAT32Elements size = " + FAT32Elements.size());
+    }
+    
+    @Override
+    public void getFiles() {
+        for (FAT32Element f32El: FAT32Elements) {
+            System.out.println("-------------------");
+            System.out.println(f32El.getShortName());
+            System.out.println(f32El.getExpansion());
+        }
     }
     
     @Override
@@ -389,5 +428,91 @@ public class FAT32Extractor  extends BaseExtractor{
         
     }
 
-    
+    public String getBS_OEMNAme() {
+        return BS_OEMNAme;
+    }
+
+    public Integer getBPB_BytsPerSec() {
+        return BPB_BytsPerSec;
+    }
+
+    public Integer getBPB_SecPerClus() {
+        return BPB_SecPerClus;
+    }
+
+    public Integer getBPB_ReservedSecCnt() {
+        return BPB_ReservedSecCnt;
+    }
+
+    public Integer getBPB_NumFATs() {
+        return BPB_NumFATs;
+    }
+
+    public Integer getBPB_TotSec16() {
+        return BPB_TotSec16;
+    }
+
+    public Integer getBPB_TotSec32() {
+        return BPB_TotSec32;
+    }
+
+    public Integer getBPB_FATSz16() {
+        return BPB_FATSz16;
+    }
+
+    public Integer getBPB_FATSz32() {
+        return BPB_FATSz32;
+    }
+
+    public Integer getFATSz() {
+        return FATSz;
+    }
+
+    public Integer getBPB_FSVer() {
+        return BPB_FSVer;
+    }
+
+    public Integer getBPB_RootClus() {
+        return BPB_RootClus;
+    }
+
+    public String getBPB_FilSysType() {
+        return BPB_FilSysType;
+    }
+
+    public Integer getBPB_RootEntCnt() {
+        return BPB_RootEntCnt;
+    }
+
+    public Integer getFirstDataSector() {
+        return firstDataSector;
+    }
+
+    public Integer getDataSecCnt() {
+        return dataSecCnt;
+    }
+
+    public Integer getCountOfClusters() {
+        return countOfClusters;
+    }
+
+    public String getTypeOfFileSystem() {
+        return typeOfFileSystem;
+    }
+
+    public Integer getThisFATSecNum() {
+        return thisFATSecNum;
+    }
+
+    public Integer getThisFATEntOffset() {
+        return thisFATEntOffset;
+    }
+
+    public Integer getRootDirSectors() {
+        return RootDirSectors;
+    }
+
+    public Integer getEndOfClusterchain() {
+        return endOfClusterchain;
+    }    
 }
