@@ -1,31 +1,41 @@
 package asandrc.gmail.com.data;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
-public class FAT32Element {
+/**
+ *
+ * @author Саша
+ */
+public class FAT32DIRElement {
     
-    private String shortName;
-    private String expansion;
-    private Integer DIR_Attr;
-    private Integer DIR_NTRes;
-    private Integer DIR_CrtTimeTenth;
-    private Integer DIR_CrtTime;
-    private Integer DIR_CrtDate;
-    private Integer DIR_LstAccDate;
-    private Integer DIR_FstClusHI;
-    private Integer DIR_WrtTime;
-    private Integer DIR_WrtDate;
-    private Integer DIR_FstClusLO;
-    private Integer DIR_FileSize;
+    protected static final Integer DIR_ELEMENT_SIZE = 32;
     
-    private byte[] bytesOfFAT32Element;
+    protected String shortName;
+    protected String expansion;
+    protected Integer DIR_Attr;
+    protected Integer DIR_NTRes;
+    protected Integer DIR_CrtTimeTenth;
+    protected Integer DIR_CrtTime;
+    protected Integer DIR_CrtDate;
+    protected Integer DIR_LstAccDate;
+    protected Integer DIR_FstClusHI;
+    protected Integer DIR_WrtTime;
+    protected Integer DIR_WrtDate;
+    protected Integer DIR_FstClusLO;
+    protected Integer DIR_FileSize;
+    protected Integer DIR_FstClusFULL;
+    
+    protected byte[] numbersOfClusters;
+        
+    protected byte[] bytesOfFAT32Element;
     
     /**
      * Преобразует массив байтов в целое число
      * @param bytes
      * @return 
      */
-    private int byteArrayToInt(byte[] bytes) {
+    protected int byteArrayToInt(byte[] bytes) {
         int result = 0;
         int l = bytes.length - 1;
         for (int i = 0; i < bytes.length; i++) {
@@ -35,16 +45,16 @@ public class FAT32Element {
         return result;
     }
     
-    public FAT32Element(byte[] bytes) throws UnsupportedEncodingException {
-        if (bytes.length == 32) {
+    public FAT32DIRElement(byte[] bytes) throws UnsupportedEncodingException {
+        if (bytes.length == DIR_ELEMENT_SIZE) {
             bytesOfFAT32Element = bytes;
             init();
         } else {
-            System.out.println("ERROR: FAT32 element can't be greater or lesser than 32 bytes!");
+            System.out.println("ERROR: FAT32 DIRElement can't be greater or lesser than 32 bytes!");
         }
     }
     
-    private void init() throws UnsupportedEncodingException {
+    protected void init() throws UnsupportedEncodingException {
         calcShortName();
         calcExpansion();
         calcDIR_Attr();
@@ -58,13 +68,14 @@ public class FAT32Element {
         calcDIR_WrtDate();
         calcDIR_FstClusLO();
         calcDIR_FileSize();
+        calcDIR_FstClusFULL();
     }
     
     /**
      * Вычисление короткого имени файла
      * @throws UnsupportedEncodingException 
      */
-    private void calcShortName() throws UnsupportedEncodingException {
+    protected void calcShortName() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[8];
         for (int i = 0;i < 8; i++) {
             bTemp[i] = bytesOfFAT32Element[i];
@@ -76,7 +87,7 @@ public class FAT32Element {
      * Вычисление расширения файла
      * @throws UnsupportedEncodingException 
      */
-    private void calcExpansion() throws UnsupportedEncodingException {
+    protected void calcExpansion() throws UnsupportedEncodingException {
         byte[] bTemp = new byte[3];
         for (int i = 8;i < 11; i++) {
             bTemp[i-8] = bytesOfFAT32Element[i];
@@ -87,7 +98,7 @@ public class FAT32Element {
     /**
      * Вычисление атрибутов файла
      */
-    private void calcDIR_Attr() {
+    protected void calcDIR_Attr() {
         byte[] bTemp = new byte[1];
         for (int i = 11;i < 12; i++) {
             bTemp[i-11] = bytesOfFAT32Element[i];
@@ -98,7 +109,7 @@ public class FAT32Element {
     /**
      * Зарезервировано для Windows NT
      */
-    private void calcDIR_NTRes() {
+    protected void calcDIR_NTRes() {
         byte[] bTemp = new byte[1];
         for (int i = 12;i < 13; i++) {
             bTemp[i-12] = bytesOfFAT32Element[i];
@@ -109,7 +120,7 @@ public class FAT32Element {
     /**
      * Вычисление штампа милисекунд текущего времени
      */
-    private void calcDIR_CrtTimeTenth() {
+    protected void calcDIR_CrtTimeTenth() {
         byte[] bTemp = new byte[1];
         for (int i = 13;i < 14; i++) {
             bTemp[i-13] = bytesOfFAT32Element[i];
@@ -120,7 +131,7 @@ public class FAT32Element {
     /**
      * Вычисление времени создания файла
      */
-    private void calcDIR_CrtTime() {
+    protected void calcDIR_CrtTime() {
         byte[] bTemp = new byte[2];
         for (int i = 14;i < 16; i++) {
             bTemp[i-14] = bytesOfFAT32Element[i];
@@ -131,7 +142,7 @@ public class FAT32Element {
     /**
      * Вычисление даты создания файла
      */
-    private void calcDIR_CrtDate() {
+    protected void calcDIR_CrtDate() {
         byte[] bTemp = new byte[2];
         for (int i = 16;i < 18; i++) {
             bTemp[i-16] = bytesOfFAT32Element[i];
@@ -142,7 +153,7 @@ public class FAT32Element {
     /**
      * Вычисление даты последнего обращения файла
      */
-    private void calcDIR_LstAccDate() {
+    protected void calcDIR_LstAccDate() {
         byte[] bTemp = new byte[2];
         for (int i = 18;i < 20; i++) {
             bTemp[i-18] = bytesOfFAT32Element[i];
@@ -153,7 +164,7 @@ public class FAT32Element {
     /**
      * Вычисление старшего слова номера 1го кластера
      */
-    private void calcDIR_FstClusHI() {
+    protected void calcDIR_FstClusHI() {
         byte[] bTemp = new byte[2];
         for (int i = 20;i < 22; i++) {
             bTemp[i-20] = bytesOfFAT32Element[i];
@@ -164,7 +175,7 @@ public class FAT32Element {
     /**
      * Вычисление времени последней записи
      */
-    private void calcDIR_WrtTime() {
+    protected void calcDIR_WrtTime() {
         byte[] bTemp = new byte[2];
         for (int i = 22;i < 24; i++) {
             bTemp[i-22] = bytesOfFAT32Element[i];
@@ -175,7 +186,7 @@ public class FAT32Element {
     /**
      * Вычисление даты последней записи
      */
-    private void calcDIR_WrtDate() {
+    protected void calcDIR_WrtDate() {
         byte[] bTemp = new byte[2];
         for (int i = 24;i < 26; i++) {
             bTemp[i-24] = bytesOfFAT32Element[i];
@@ -186,7 +197,7 @@ public class FAT32Element {
     /**
      * Вычисление младшего слова номера первого кластера
      */
-    private void calcDIR_FstClusLO() {
+    protected void calcDIR_FstClusLO() {
         byte[] bTemp = new byte[2];
         for (int i = 26;i < 28; i++) {
             bTemp[i-26] = bytesOfFAT32Element[i];
@@ -197,12 +208,26 @@ public class FAT32Element {
     /**
      * Вычисление размера файла в байтах
      */
-    private void calcDIR_FileSize() {
+    protected void calcDIR_FileSize() {
         byte[] bTemp = new byte[4];
         for (int i = 28;i < 32; i++) {
             bTemp[i-28] = bytesOfFAT32Element[i];
         }        
         DIR_FileSize = byteArrayToInt(bTemp);
+    }
+    
+    /**
+     * Вычисление двойного слова номера 1го кластера
+     */
+    protected void calcDIR_FstClusFULL() {
+        byte[] bTemp = new byte[4];
+        for (int i = 26;i < 28; i++) {
+            bTemp[i-26] = bytesOfFAT32Element[i];
+        }  
+        for (int i = 20;i < 22; i++) {
+            bTemp[i-18] = bytesOfFAT32Element[i];
+        }
+        DIR_FstClusFULL = byteArrayToInt(bTemp);
     }
 
     public String getShortName() {
@@ -255,5 +280,14 @@ public class FAT32Element {
 
     public Integer getDIR_FileSize() {
         return DIR_FileSize;
+    }
+
+    public Integer getDIR_FstClusFULL() {
+        return DIR_FstClusFULL;
+    }
+    
+    @Override
+    public String toString() {
+        return shortName;
     }
 }
