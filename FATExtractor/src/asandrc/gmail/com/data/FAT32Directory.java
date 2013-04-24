@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * Класс записи директории в файловой системе FAT32
  * @author Саша
  */
 public class FAT32Directory extends FAT32DIRElement {
@@ -13,6 +13,11 @@ public class FAT32Directory extends FAT32DIRElement {
     protected List<FAT32DIRElement> childElements;
     protected List<FAT32Directory> childDirectories;
     
+    /**
+     * Конструктор
+     * @param bytes
+     * @throws UnsupportedEncodingException 
+     */
     public FAT32Directory(byte[] bytes) throws UnsupportedEncodingException {
         super(bytes);
         childElements = new ArrayList<FAT32DIRElement>();
@@ -28,10 +33,18 @@ public class FAT32Directory extends FAT32DIRElement {
         shortName = newShortName;
     }
 
+    /**
+     * Метод получения списка FAT32DIRElement
+     * @return список FAT32DIRElement
+     */
     public List<FAT32DIRElement> getChildElements() {
         return childElements;
     }
 
+    /**
+     * Метод получения списка FAT32Directory (директорий)
+     * @return список FAT32Directory
+     */
     public List<FAT32Directory> getChildDirectories() {
         return childDirectories;
     }

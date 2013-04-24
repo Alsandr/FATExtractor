@@ -25,7 +25,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 /**
- *
+ * Класс главного окна FATExtractor
  * @author Саша
  */
 public class MainFrame extends javax.swing.JFrame {
@@ -38,6 +38,10 @@ public class MainFrame extends javax.swing.JFrame {
     private String leafIconPath = "resources/icons/folder-orange.png";
     private String openIconPath = "resources/icons/folder-green.png";
     private String closeIconPath = "resources/icons/folder-blue.png";
+    private String aboutIconPath = "resources/icons/discussion.png";
+    private String readyStatusIconPath = "resources/icons/user.png";
+    private String successStatusIconPath = "resources/icons/check-green.png";
+    private String failedStatusIconPath = "resources/icons/alert.png";
     
     private String extractIconPath = "resources/icons/arrow-green-up.png";
     
@@ -54,23 +58,30 @@ public class MainFrame extends javax.swing.JFrame {
         initComponents();
         fat32Extractor = new FAT32Extractor();
         jTree = new JTree();
-        jTree.setModel(null);
-        
+        jTree.setModel(null);        
         if (menuOpenIconPath != null && menuOpenIconPath != null
                 && extractIconPath != null) {
            ImageIcon menuOpenIcon = new ImageIcon(this.getClass().getResource(menuOpenIconPath));
            ImageIcon menuCloseIcon = new ImageIcon(this.getClass().getResource(menuCloseIconPath));
            ImageIcon extractToolIcon = new ImageIcon(this.getClass().getResource(extractIconPath));
+           ImageIcon extractItemIcon = new ImageIcon(this.getClass().getResource(extractIconPath));
+           ImageIcon aboutItemIcon = new ImageIcon(this.getClass().getResource(aboutIconPath));
+           ImageIcon readyStatusIcon = new ImageIcon(this.getClass().getResource(readyStatusIconPath));
            openItem.setIcon(menuOpenIcon);
            closeItem.setIcon(menuCloseIcon);
            openToolButton.setIcon(menuOpenIcon);
            extractToolButton.setIcon(extractToolIcon);
+           extractItem.setIcon(extractItemIcon);
+           aboutItem.setIcon(aboutItemIcon);
+           statusIconLabel.setIcon(readyStatusIcon);
         }
-                        
         contentList = new JList();
         jScrollPane1.setViewportView(jTree);
     }
     
+    /**
+     * Метод вывода информации о файловой системе
+     */
     private void getInfo() {
         infoTextArea.setText("");
         infoTextArea.append(" Тип FAT: " + fat32Extractor.getTypeOfFileSystem());
@@ -114,12 +125,18 @@ public class MainFrame extends javax.swing.JFrame {
         ToolBar = new javax.swing.JToolBar();
         openToolButton = new javax.swing.JButton();
         extractToolButton = new javax.swing.JButton();
+        jPanel4 = new javax.swing.JPanel();
+        statusIconLabel = new javax.swing.JLabel();
+        statusTextLabel = new javax.swing.JLabel();
         mainMenu = new javax.swing.JMenuBar();
         FileMenu = new javax.swing.JMenu();
         openItem = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         closeItem = new javax.swing.JMenuItem();
-        jMenu2 = new javax.swing.JMenu();
+        ActionMenu = new javax.swing.JMenu();
+        extractItem = new javax.swing.JMenuItem();
+        AboutMenu = new javax.swing.JMenu();
+        aboutItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("FAT32Extractor");
@@ -162,11 +179,11 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 285, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE)
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Содержимое директории", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Calibri", 0, 11))); // NOI18N
@@ -180,11 +197,11 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
 
         ToolBar.setFloatable(false);
@@ -205,7 +222,6 @@ public class MainFrame extends javax.swing.JFrame {
 
         extractToolButton.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         extractToolButton.setToolTipText("Извлечь файл в...");
-        extractToolButton.setActionCommand("");
         extractToolButton.setFocusable(false);
         extractToolButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         extractToolButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -215,6 +231,30 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         ToolBar.add(extractToolButton);
+
+        statusIconLabel.setMaximumSize(new java.awt.Dimension(16, 12));
+        statusIconLabel.setMinimumSize(new java.awt.Dimension(16, 12));
+
+        statusTextLabel.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        statusTextLabel.setText("Готов");
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addComponent(statusIconLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(statusTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(statusIconLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(statusTextLabel))
+        );
 
         mainMenu.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
 
@@ -245,9 +285,34 @@ public class MainFrame extends javax.swing.JFrame {
 
         mainMenu.add(FileMenu);
 
-        jMenu2.setText("Edit");
-        jMenu2.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        mainMenu.add(jMenu2);
+        ActionMenu.setText("Действие");
+        ActionMenu.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+
+        extractItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_E, java.awt.event.InputEvent.CTRL_MASK));
+        extractItem.setText("Извлечь в...");
+        extractItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                extractItemActionPerformed(evt);
+            }
+        });
+        ActionMenu.add(extractItem);
+
+        mainMenu.add(ActionMenu);
+
+        AboutMenu.setText("Справка");
+        AboutMenu.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+
+        aboutItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_H, java.awt.event.InputEvent.CTRL_MASK));
+        aboutItem.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        aboutItem.setText("О FATExtractor");
+        aboutItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                aboutItemActionPerformed(evt);
+            }
+        });
+        AboutMenu.add(aboutItem);
+
+        mainMenu.add(AboutMenu);
 
         setJMenuBar(mainMenu);
 
@@ -260,78 +325,175 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
             .addComponent(ToolBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(ToolBar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Нажатие пункта меню "Фалй-Выход"
+     * @param evt 
+     */
     private void closeItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeItemActionPerformed
         this.dispose();
     }//GEN-LAST:event_closeItemActionPerformed
 
+    /**
+     * Нажатие пункта меню "Файл-Открыть файл"
+     * @param evt 
+     */
     private void openItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openItemActionPerformed
         openFAT();
     }//GEN-LAST:event_openItemActionPerformed
 
+    /**
+     * Нажатие кнопки "Открыть" на панели инструментов
+     * @param evt 
+     */
     private void openToolButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openToolButtonActionPerformed
         openFAT();
     }//GEN-LAST:event_openToolButtonActionPerformed
 
+    /**
+     * Нажатие кнопки "Извлечь в..." на панели инструментов
+     * @param evt 
+     */
     private void extractToolButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_extractToolButtonActionPerformed
+        extractFile();
+    }//GEN-LAST:event_extractToolButtonActionPerformed
+
+    /**
+     * Нажатие пункта меню "Действия-Извлечь в..."
+     * @param evt 
+     */
+    private void extractItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_extractItemActionPerformed
+        extractFile();
+    }//GEN-LAST:event_extractItemActionPerformed
+
+    /**
+     * Нажатие пункта меню "Справка-ОFATExtractor"
+     * @param evt 
+     */
+    private void aboutItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_aboutItemActionPerformed
+        JOptionPane.showMessageDialog(this, "FATExtractor предназначен для просмотра "
+                + "содержимого\nи извлечения файлов из томов с файловой системой FAT32");
+    }//GEN-LAST:event_aboutItemActionPerformed
+
+    /**
+     * Метод извлечения файла
+     */
+    private void extractFile() {
         if (contentList.isSelectionEmpty()) {
             JOptionPane.showMessageDialog(this, "Файл не выбран");
         } else {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-            fileChooser.setSelectedFile(new File(extractedFile.getShortName() + "." + extractedFile.getExpansion()));
-            int answer = fileChooser.showDialog(null, "Извлечь файл в...");
-            if (answer == JFileChooser.APPROVE_OPTION) {
-                File newF = new File(fileChooser.getCurrentDirectory().getAbsolutePath()
-                        + "/" + extractedFile.getShortName().trim() + "." + extractedFile.getExpansion());
-                                
-                try {
-                    FileOutputStream os = new FileOutputStream(newF);
-                    os.write(fat32Extractor.extractFile(extractedFile));
-                    os.close();
-                } catch(Exception e) {
-                    e.printStackTrace();
-                    System.out.println("SOMETHING WRONG: ");
-                }
+            if ((extractedFile.getDIR_Attr() 
+                    & fat32Extractor.getATTR_DIRECTORY()) == fat32Extractor.getATTR_DIRECTORY()) {
+                JOptionPane.showMessageDialog(this, "Нельзя извлекать директории в данной версии программы");
             } else {
-                JOptionPane.showMessageDialog(this, "Отмена извлечения");
-            }            
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+                fileChooser.setSelectedFile(new File(extractedFile.getShortName() + "." + extractedFile.getExpansion()));
+                int answer = fileChooser.showDialog(null, "Извлечь файл в...");
+                if (answer == JFileChooser.APPROVE_OPTION) {
+                    File newF = new File(fileChooser.getCurrentDirectory().getAbsolutePath()
+                            + "/" + extractedFile.getShortName().trim() + "." + extractedFile.getExpansion());
+                    try {
+                        FileOutputStream os = new FileOutputStream(newF);
+                        os.write(fat32Extractor.extractFile(extractedFile));
+                        os.close();
+                        setExtractStatusSuccess(fileChooser.getCurrentDirectory().getAbsolutePath()
+                            + "\\" + extractedFile.getShortName().trim() + "." + extractedFile.getExpansion());
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                        setExtractStatusFailed();
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "Отмена извлечения");
+                }            
+            }
         }
-    }//GEN-LAST:event_extractToolButtonActionPerformed
-
+    }
+    
+    /**
+     * Установка статуса успешного извлечения файла
+     * @param path путь куда извлекся файл
+     */
+    private void setExtractStatusSuccess(String path) {
+        ImageIcon successStatusIcon = new ImageIcon(this.getClass().getResource(successStatusIconPath));
+        statusIconLabel.setIcon(successStatusIcon);
+        statusTextLabel.setText("Файл успешно извлечен: " + path);
+    }
+    
+    /**
+     * Установка статуса неудачного извлечения файла
+     */
+    private void setExtractStatusFailed() {
+        ImageIcon failedStatusIcon = new ImageIcon(this.getClass().getResource(failedStatusIconPath));
+        statusIconLabel.setIcon(failedStatusIcon);
+        statusTextLabel.setText("Ошибка извлечения");
+    }
+    
+    /**
+     * Метод открытия файла (образа) FAT32
+     */
     private void openFAT() {
         JFileChooser fileChooser = new JFileChooser("./");
         int answer = fileChooser.showDialog(null, "Октрыть файл FAT");
         if (answer == JFileChooser.APPROVE_OPTION) {
-            fat32Extractor.openFAT(fileChooser.getSelectedFile());
-            buildTree(fat32Extractor.getRootElement());
-            getInfo();
+            boolean checkFAT = fat32Extractor.openFAT(fileChooser.getSelectedFile());
+            if (checkFAT) {
+                buildTree(fat32Extractor.getRootElement());
+                getInfo();
+                setOpenSuccessStatus();
+            } else {
+                setOpenFailedStatus();
+            }
         } else {
             JOptionPane.showMessageDialog(this, "Файл системы (образ) FAT32 не выбран");
         }
     }
     
+    /**
+     * Метод установки статуса успешного открытия файла FAT32
+     */
+    private void setOpenSuccessStatus() {
+        ImageIcon succesStatusIcon = new ImageIcon(this.getClass().getResource(successStatusIconPath));
+        statusIconLabel.setIcon(succesStatusIcon);
+        statusTextLabel.setText("Файл (образ) FAT успешно открыт");
+    }
+    
+    /**
+     * Метод установки статуса неудачного открытия файла
+     */
+    private void setOpenFailedStatus() {
+        ImageIcon failedStatusIcon = new ImageIcon(this.getClass().getResource(failedStatusIconPath));
+        statusIconLabel.setIcon(failedStatusIcon);
+        statusTextLabel.setText("Ошибка открытия файла");
+    }
+    
+    /**
+     * Метод построения дерева для древовидного списка jTree
+     * @param rootElement корневой элемент директории FAT32
+     */
     private void buildTree(FAT32Directory rootElement) {
         DefaultMutableTreeNode top = createNodes(rootElement);
         jTree = new JTree(top);
@@ -350,6 +512,11 @@ public class MainFrame extends javax.swing.JFrame {
         jScrollPane1.setViewportView(jTree);
     }
     
+    /**
+     * Метод создания узла дерева
+     * @param rootElement узел предок
+     * @return 
+     */
     private DefaultMutableTreeNode createNodes(FAT32Directory rootElement) {
         DefaultMutableTreeNode node = new DefaultMutableTreeNode(rootElement);
         DefaultMutableTreeNode childNode;
@@ -368,6 +535,10 @@ public class MainFrame extends javax.swing.JFrame {
         return node;
     }
     
+    /**
+     * Метод добавления содержимого выбраной директории в список contentList
+     * @param obj выделеная директория типа FAT32Directory
+     */
     protected void addContentOfDirToList(Object obj) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) obj;
         FAT32Directory f32Directory = (FAT32Directory) node.getUserObject();
@@ -386,6 +557,10 @@ public class MainFrame extends javax.swing.JFrame {
         jScrollPane3.setViewportView(contentList);
     }
     
+    /**
+     * Для получения выделеной директории как объект FAT32Directory
+     * из дерева jTree
+     */
     private class Selector implements TreeSelectionListener {
     public void valueChanged(TreeSelectionEvent event) {
       Object obj = event.getNewLeadSelectionPath().getLastPathComponent();      
@@ -428,16 +603,20 @@ public class MainFrame extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenu AboutMenu;
+    private javax.swing.JMenu ActionMenu;
     private javax.swing.JMenu FileMenu;
     private javax.swing.JToolBar ToolBar;
+    private javax.swing.JMenuItem aboutItem;
     private javax.swing.JMenuItem closeItem;
     private javax.swing.JList contentList;
+    private javax.swing.JMenuItem extractItem;
     private javax.swing.JButton extractToolButton;
     private javax.swing.JTextArea infoTextArea;
-    private javax.swing.JMenu jMenu2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
@@ -446,5 +625,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuBar mainMenu;
     private javax.swing.JMenuItem openItem;
     private javax.swing.JButton openToolButton;
+    private javax.swing.JLabel statusIconLabel;
+    private javax.swing.JLabel statusTextLabel;
     // End of variables declaration//GEN-END:variables
 }

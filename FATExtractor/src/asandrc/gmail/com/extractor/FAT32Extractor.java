@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Реализований FAT32Extractor для просмотра содержимого и извлечения файлов системы FAT32
  * @author Саша
  */
 public class FAT32Extractor extends BaseExtractor {
@@ -72,7 +72,7 @@ public class FAT32Extractor extends BaseExtractor {
      * @param path путь к файлу (образу)
      */
     @Override
-    public void openFAT(File FATfile) {
+    public boolean openFAT(File FATfile) {
         image = FATfile;
         if (image.exists()) {
             try {
@@ -82,11 +82,14 @@ public class FAT32Extractor extends BaseExtractor {
                 } catch (IOException ex) {
                     Logger.getLogger(FAT32Extractor.class.getName()).log(Level.SEVERE, null, ex);
                 }
+                return true;
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(FAT32Extractor.class.getName()).log(Level.SEVERE, null, ex);
+                return false;
             }
         } else {
             System.out.println("File doesn't exsist");
+            return false;
         }
     }
     
@@ -412,6 +415,10 @@ public class FAT32Extractor extends BaseExtractor {
         thisFATEntOffset = FATOffset % BPB_BytsPerSec;
     }
     
+    /**
+     * Поиск записей файлов в системе
+     * @throws UnsupportedEncodingException 
+     */
     public void searchFAT32Element() throws UnsupportedEncodingException {
         //получение корневого элемента FAT32
         byte[] rootBytes = new byte[32];
@@ -420,12 +427,9 @@ public class FAT32Extractor extends BaseExtractor {
         }
         rootElement = new FAT32Directory(rootBytes);
         //явная установка имени (для удобства отображения)
-        rootElement.setShortName("\\");
-        
+        rootElement.setShortName("\\");        
         // первый байт области данных
-        int firstDataByte = firstDataSector * BPB_BytsPerSec;
-        System.out.println("firstDataByte = " + firstDataByte);
-        
+        int firstDataByte = firstDataSector * BPB_BytsPerSec;        
         buildHierarchy(rootElement, firstDataByte);
     }
     
@@ -464,7 +468,7 @@ public class FAT32Extractor extends BaseExtractor {
             i = byteOffset + (DIR_ELEMENT_SIZE * c); 
         }
     }
-        
+    
     @Override
     public byte[] extractFile(FAT32DIRElement f32DIRElement) {
         int countFileClusters = 0;
@@ -473,42 +477,50 @@ public class FAT32Extractor extends BaseExtractor {
         } else {
             countFileClusters = f32DIRElement.getDIR_FileSize() / BPB_BytsPerSec + 1;
         }
+        //счетчик кластеров файла для правильной записи байтов в выходной массив bytesOfF32DIRElement
         int c = 0;
         bytesOfF32DIRElement = new byte[BPB_BytsPerSec * countFileClusters];
-        System.out.println("======================================");
-        System.out.println("Size of byteArr = " + bytesOfF32DIRElement.length);
-        checkEOF(f32DIRElement.getDIR_FstClusFULL(), bytesOfF32DIRElement, c);        
-        
-        return bytesOfF32DIRElement;
-    }
-    
-    private void checkEOF(int N, byte[] bytesOfF32DIRElement, int countCl) {        
-        byte[] bTemp = readCluster(N);
-        
-        System.out.println("countCL = " + countCl);
+        // считывание первый кластер файла
+        byte[] bTemp = readCluster(f32DIRElement.getDIR_FstClusFULL());
         for (int i = 0; i < BPB_BytsPerSec; i++) {
-            bytesOfF32DIRElement[i + countCl * BPB_BytsPerSec] = bTemp[i];
+            bytesOfF32DIRElement[i + c * BPB_BytsPerSec] = bTemp[i];
         }
-        calcThisFATEntOffset(N);
+        // вычисление смещения в таблице FAT
+        calcThisFATEntOffset(f32DIRElement.getDIR_FstClusFULL());
         byte[] bCheckEOF = new byte[4];
-        
         int beginOffset = thisFATSecNum * BPB_BytsPerSec + thisFATEntOffset;
         int endOffset = thisFATSecNum * BPB_BytsPerSec + thisFATEntOffset + 4;
-        System.out.println("FAT offset = " + beginOffset);
         for (int j = beginOffset; j < endOffset; j++) {
-            System.out.println(j - beginOffset);
             bCheckEOF[j - beginOffset] = imageBytes[j];
         }
         int resultEOF = byteArrayToInt(bCheckEOF);
-        System.out.println("Cluster value = " + resultEOF);
-        if (resultEOF >= 0x0FFFFFFF) {
-            
-        } else {
-            countCl++;
-            checkEOF(resultEOF, bytesOfF32DIRElement, countCl);
+        // если кластер не последний то продолжаем искать кластеры по таблице FAT
+        // и записывать их в выходной массив байтов bytesOfF32DIRElement
+        if (resultEOF < 0x0FFFFFFF) {
+            do {
+                c++;
+                bTemp = readCluster(resultEOF);
+                for (int i = 0; i < BPB_BytsPerSec; i++) {
+                    bytesOfF32DIRElement[i + c * BPB_BytsPerSec] = bTemp[i];
+                }
+                calcThisFATEntOffset(resultEOF);
+                bCheckEOF = new byte[4];
+                beginOffset = thisFATSecNum * BPB_BytsPerSec + thisFATEntOffset;
+                endOffset = thisFATSecNum * BPB_BytsPerSec + thisFATEntOffset + 4;
+                for (int j = beginOffset; j < endOffset; j++) {
+                    bCheckEOF[j - beginOffset] = imageBytes[j];
+                }
+                resultEOF = byteArrayToInt(bCheckEOF);
+            } while (resultEOF < 0x0FFFFFFF);
         }
+        return bytesOfF32DIRElement;
     }
 
+    /**
+     * Функция чтения кластера
+     * @param clusterNum номер кластера
+     * @return массив байтов кластера
+     */
     private byte[] readCluster(int clusterNum) {
         byte[] bytesOfCluster = new byte[BPB_BytsPerSec];
         int firstByteOfCluster = (clusterNum + firstDataSector - 2) * BPB_BytsPerSec;
@@ -608,5 +620,37 @@ public class FAT32Extractor extends BaseExtractor {
 
     public FAT32Directory getRootElement() {
         return rootElement;
+    }
+
+    public static Integer getATTR_READ_ONLY() {
+        return ATTR_READ_ONLY;
+    }
+
+    public static Integer getATTR_HIDDEN() {
+        return ATTR_HIDDEN;
+    }
+
+    public static Integer getATTR_SYSTEM() {
+        return ATTR_SYSTEM;
+    }
+
+    public static Integer getATTR_VOLUME_ID() {
+        return ATTR_VOLUME_ID;
+    }
+
+    public static Integer getATTR_DIRECTORY() {
+        return ATTR_DIRECTORY;
+    }
+
+    public static Integer getATTR_ARCHIVE() {
+        return ATTR_ARCHIVE;
+    }
+
+    public static Integer getATTR_LONG_NAME() {
+        return ATTR_LONG_NAME;
+    }
+
+    public static Integer getATTR_LONG_NAME_MASK() {
+        return ATTR_LONG_NAME_MASK;
     }
 }

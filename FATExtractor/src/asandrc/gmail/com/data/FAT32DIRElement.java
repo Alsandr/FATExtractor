@@ -4,7 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 /**
- *
+ * Класс записи файла в файловой системе FAT32
  * @author Саша
  */
 public class FAT32DIRElement {
@@ -52,15 +52,24 @@ public class FAT32DIRElement {
         return result;
     }
     
+    /**
+     * Конструктор
+     * @param bytes массив байтов элемента FAT32
+     * @throws UnsupportedEncodingException 
+     */
     public FAT32DIRElement(byte[] bytes) throws UnsupportedEncodingException {
         if (bytes.length == DIR_ELEMENT_SIZE) {
             bytesOfFAT32Element = bytes;
             init();
         } else {
-            System.out.println("ERROR: FAT32 DIRElement can't be greater or lesser than 32 bytes!");
+            System.out.println("ERROR: FAT32DIRElement can't be greater or lesser than 32 bytes!");
         }
     }
     
+    /**
+     * Метод инициализации - вычисления основных параметров элемента FAT32
+     * @throws UnsupportedEncodingException 
+     */
     protected void init() throws UnsupportedEncodingException {
         calcShortName();
         calcExpansion();
