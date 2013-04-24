@@ -2,18 +2,27 @@ package asandrc.gmail.com.view;
 
 import asandrc.gmail.com.data.FAT32DIRElement;
 import asandrc.gmail.com.data.FAT32Directory;
+import asandrc.gmail.com.data.FAT32DirectoryTreeNode;
 import asandrc.gmail.com.extractor.FAT32Extractor;
 import java.awt.Component;
+import java.awt.Font;
+import java.io.File;
+import java.io.FileOutputStream;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.ListModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 
 /**
  *
@@ -22,9 +31,20 @@ import javax.swing.tree.DefaultMutableTreeNode;
 public class MainFrame extends javax.swing.JFrame {
 
     private FAT32Extractor fat32Extractor;
+    
+    private String menuOpenIconPath = "resources/icons/package.png";
+    private String menuCloseIconPath = "resources/icons/stop.png";
+    
+    private String leafIconPath = "resources/icons/folder-orange.png";
+    private String openIconPath = "resources/icons/folder-green.png";
+    private String closeIconPath = "resources/icons/folder-blue.png";
+    
+    private String extractIconPath = "resources/icons/arrow-green-up.png";
+    
+    private FAT32DIRElement extractedFile;
 
-    public void setFat32Extractor(FAT32Extractor fat32Extractor) {
-        this.fat32Extractor = fat32Extractor;
+    public FAT32DIRElement getExtractedFile() {
+        return extractedFile;
     }
     
     /**
@@ -35,6 +55,18 @@ public class MainFrame extends javax.swing.JFrame {
         fat32Extractor = new FAT32Extractor();
         jTree = new JTree();
         jTree.setModel(null);
+        
+        if (menuOpenIconPath != null && menuOpenIconPath != null
+                && extractIconPath != null) {
+           ImageIcon menuOpenIcon = new ImageIcon(this.getClass().getResource(menuOpenIconPath));
+           ImageIcon menuCloseIcon = new ImageIcon(this.getClass().getResource(menuCloseIconPath));
+           ImageIcon extractToolIcon = new ImageIcon(this.getClass().getResource(extractIconPath));
+           openItem.setIcon(menuOpenIcon);
+           closeItem.setIcon(menuCloseIcon);
+           openToolButton.setIcon(menuOpenIcon);
+           extractToolButton.setIcon(extractToolIcon);
+        }
+                        
         contentList = new JList();
         jScrollPane1.setViewportView(jTree);
     }
@@ -43,10 +75,22 @@ public class MainFrame extends javax.swing.JFrame {
         infoTextArea.setText("");
         infoTextArea.append(" Тип FAT: " + fat32Extractor.getTypeOfFileSystem());
         infoTextArea.append("\n BS_OEMNAME: " + fat32Extractor.getBS_OEMNAme());
-        infoTextArea.append("\n Байтов в секторе: " + fat32Extractor.getBPB_BytsPerSec().toString());
-        infoTextArea.append("\n Секторов в кластере: " + fat32Extractor.getBPB_SecPerClus().toString());
         infoTextArea.append("\n FAT таблиц: " + fat32Extractor.getBPB_NumFATs().toString());
+        infoTextArea.append("\n Байтов в секторе: " + fat32Extractor.getBPB_BytsPerSec().toString());
+        infoTextArea.append("\n Секторов в кластере: " + fat32Extractor.getBPB_SecPerClus().toString());        
         infoTextArea.append("\n Количество кластеров: " + fat32Extractor.getCountOfClusters().toString());
+        int size = fat32Extractor.getCountOfClusters() * fat32Extractor.getBPB_BytsPerSec();
+        String dim = "";
+        if (size >= 1024) {
+            size /= 1024;
+            dim = "Кб";
+        } else if (size >= 1048576) {
+            size /= 1048576;
+            dim = "Мб";
+        } else {          
+           dim = "байт"; 
+        }
+        infoTextArea.append("\n Размер тома FAT32: " + size + " " + dim);
     }
 
     /**
@@ -64,13 +108,17 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTree = new javax.swing.JTree();
+        jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         contentList = new javax.swing.JList();
-        jMenuBar1 = new javax.swing.JMenuBar();
-        jMenu1 = new javax.swing.JMenu();
-        jMenuItem1 = new javax.swing.JMenuItem();
+        ToolBar = new javax.swing.JToolBar();
+        openToolButton = new javax.swing.JButton();
+        extractToolButton = new javax.swing.JButton();
+        mainMenu = new javax.swing.JMenuBar();
+        FileMenu = new javax.swing.JMenu();
+        openItem = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
-        jMenuItem2 = new javax.swing.JMenuItem();
+        closeItem = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -83,9 +131,11 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel1.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
 
         infoTextArea.setEditable(false);
+        infoTextArea.setBackground(new java.awt.Color(226, 226, 226));
         infoTextArea.setColumns(20);
         infoTextArea.setFont(new java.awt.Font("Monospaced", 0, 11)); // NOI18N
         infoTextArea.setRows(5);
+        infoTextArea.setDisabledTextColor(new java.awt.Color(153, 153, 153));
         infoTextArea.setSelectionColor(new java.awt.Color(204, 204, 204));
         jScrollPane2.setViewportView(infoTextArea);
 
@@ -97,7 +147,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Структура FAT раздела", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Calibri", 0, 11))); // NOI18N
@@ -116,48 +166,90 @@ public class MainFrame extends javax.swing.JFrame {
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 290, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 285, Short.MAX_VALUE)
         );
 
-        contentList.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Содержимое директории", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Calibri", 0, 11))); // NOI18N
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Содержимое директории", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Calibri", 0, 11))); // NOI18N
+
         contentList.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
         contentList.setSelectionBackground(new java.awt.Color(204, 204, 204));
+        contentList.setVisibleRowCount(25);
         jScrollPane3.setViewportView(contentList);
 
-        jMenuBar1.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane3)
+        );
 
-        jMenu1.setText("Файл");
-        jMenu1.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        ToolBar.setFloatable(false);
+        ToolBar.setRollover(true);
+        ToolBar.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
 
-        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
-        jMenuItem1.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        jMenuItem1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/asandrc/gmail/com/view/resources/icons/package.png"))); // NOI18N
-        jMenuItem1.setText("Открыть файл");
-        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+        openToolButton.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        openToolButton.setToolTipText("Открыть файл (образ) системы FAT32");
+        openToolButton.setFocusable(false);
+        openToolButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        openToolButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        openToolButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem1ActionPerformed(evt);
+                openToolButtonActionPerformed(evt);
             }
         });
-        jMenu1.add(jMenuItem1);
-        jMenu1.add(jSeparator1);
+        ToolBar.add(openToolButton);
 
-        jMenuItem2.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        jMenuItem2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/asandrc/gmail/com/view/resources/icons/stop.png"))); // NOI18N
-        jMenuItem2.setText("Выход");
-        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+        extractToolButton.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        extractToolButton.setToolTipText("Извлечь файл в...");
+        extractToolButton.setActionCommand("");
+        extractToolButton.setFocusable(false);
+        extractToolButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        extractToolButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        extractToolButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem2ActionPerformed(evt);
+                extractToolButtonActionPerformed(evt);
             }
         });
-        jMenu1.add(jMenuItem2);
+        ToolBar.add(extractToolButton);
 
-        jMenuBar1.add(jMenu1);
+        mainMenu.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+
+        FileMenu.setText("Файл");
+        FileMenu.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+
+        openItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
+        openItem.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        openItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/asandrc/gmail/com/view/resources/icons/package.png"))); // NOI18N
+        openItem.setText("Открыть файл");
+        openItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openItemActionPerformed(evt);
+            }
+        });
+        FileMenu.add(openItem);
+        FileMenu.add(jSeparator1);
+
+        closeItem.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
+        closeItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/asandrc/gmail/com/view/resources/icons/stop.png"))); // NOI18N
+        closeItem.setText("Выход");
+        closeItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                closeItemActionPerformed(evt);
+            }
+        });
+        FileMenu.add(closeItem);
+
+        mainMenu.add(FileMenu);
 
         jMenu2.setText("Edit");
         jMenu2.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        jMenuBar1.add(jMenu2);
+        mainMenu.add(jMenu2);
 
-        setJMenuBar(jMenuBar1);
+        setJMenuBar(mainMenu);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -169,17 +261,19 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
+            .addComponent(ToolBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane3)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(ToolBar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -188,13 +282,43 @@ public class MainFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+    private void closeItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeItemActionPerformed
         this.dispose();
-    }//GEN-LAST:event_jMenuItem2ActionPerformed
+    }//GEN-LAST:event_closeItemActionPerformed
 
-    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+    private void openItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openItemActionPerformed
         openFAT();
-    }//GEN-LAST:event_jMenuItem1ActionPerformed
+    }//GEN-LAST:event_openItemActionPerformed
+
+    private void openToolButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openToolButtonActionPerformed
+        openFAT();
+    }//GEN-LAST:event_openToolButtonActionPerformed
+
+    private void extractToolButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_extractToolButtonActionPerformed
+        if (contentList.isSelectionEmpty()) {
+            JOptionPane.showMessageDialog(this, "Файл не выбран");
+        } else {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+            fileChooser.setSelectedFile(new File(extractedFile.getShortName() + "." + extractedFile.getExpansion()));
+            int answer = fileChooser.showDialog(null, "Извлечь файл в...");
+            if (answer == JFileChooser.APPROVE_OPTION) {
+                File newF = new File(fileChooser.getCurrentDirectory().getAbsolutePath()
+                        + "/" + extractedFile.getShortName().trim() + "." + extractedFile.getExpansion());
+                                
+                try {
+                    FileOutputStream os = new FileOutputStream(newF);
+                    os.write(fat32Extractor.extractFile(extractedFile));
+                    os.close();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    System.out.println("SOMETHING WRONG: ");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Отмена извлечения");
+            }            
+        }
+    }//GEN-LAST:event_extractToolButtonActionPerformed
 
     private void openFAT() {
         JFileChooser fileChooser = new JFileChooser("./");
@@ -204,13 +328,24 @@ public class MainFrame extends javax.swing.JFrame {
             buildTree(fat32Extractor.getRootElement());
             getInfo();
         } else {
-            JOptionPane.showMessageDialog(this, "Файл не выбран");
+            JOptionPane.showMessageDialog(this, "Файл системы (образ) FAT32 не выбран");
         }
     }
     
     private void buildTree(FAT32Directory rootElement) {
         DefaultMutableTreeNode top = createNodes(rootElement);
         jTree = new JTree(top);
+        
+        ImageIcon leafIcon = new ImageIcon(this.getClass().getResource(leafIconPath));
+        ImageIcon openIcon = new ImageIcon(this.getClass().getResource(openIconPath));
+        ImageIcon closeIcon = new ImageIcon(this.getClass().getResource(closeIconPath));
+        if (leafIcon != null && openIcon != null && closeIcon != null) {
+            DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
+            renderer.setLeafIcon(leafIcon);
+            renderer.setOpenIcon(openIcon);
+            renderer.setClosedIcon(closeIcon);
+            jTree.setCellRenderer(renderer);
+        }
         jTree.getSelectionModel().addTreeSelectionListener(new Selector());
         jScrollPane1.setViewportView(jTree);
     }
@@ -238,7 +373,13 @@ public class MainFrame extends javax.swing.JFrame {
         FAT32Directory f32Directory = (FAT32Directory) node.getUserObject();
         ListModel listModel = new DefaultListModel();
         contentList = new JList(listModel);
-        DefaultListModel model = (DefaultListModel)contentList.getModel();
+        contentList.addListSelectionListener(
+                new ListSelectionListener() {
+                    public void valueChanged(ListSelectionEvent e) {
+                        extractedFile = (FAT32DIRElement)contentList.getSelectedValue();                        
+                    }
+                });
+        DefaultListModel model = (DefaultListModel)contentList.getModel();           
         for (int i = 0; i < f32Directory.getChildElements().size(); i++) {
             model.addElement(f32Directory.getChildElements().get(i));
         }
@@ -247,7 +388,7 @@ public class MainFrame extends javax.swing.JFrame {
     
     private class Selector implements TreeSelectionListener {
     public void valueChanged(TreeSelectionEvent event) {
-      Object obj = event.getNewLeadSelectionPath().getLastPathComponent();
+      Object obj = event.getNewLeadSelectionPath().getLastPathComponent();      
       addContentOfDirToList(obj);      
     }
   }
@@ -287,19 +428,23 @@ public class MainFrame extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenu FileMenu;
+    private javax.swing.JToolBar ToolBar;
+    private javax.swing.JMenuItem closeItem;
     private javax.swing.JList contentList;
+    private javax.swing.JButton extractToolButton;
     private javax.swing.JTextArea infoTextArea;
-    private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
-    private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JTree jTree;
+    private javax.swing.JMenuBar mainMenu;
+    private javax.swing.JMenuItem openItem;
+    private javax.swing.JButton openToolButton;
     // End of variables declaration//GEN-END:variables
 }

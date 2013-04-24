@@ -10,8 +10,8 @@ import java.util.List;
  */
 public class FAT32Directory extends FAT32DIRElement {
     
-    private List<FAT32DIRElement> childElements;
-    private List<FAT32Directory> childDirectories;
+    protected List<FAT32DIRElement> childElements;
+    protected List<FAT32Directory> childDirectories;
     
     public FAT32Directory(byte[] bytes) throws UnsupportedEncodingException {
         super(bytes);
@@ -38,6 +38,6 @@ public class FAT32Directory extends FAT32DIRElement {
     
     @Override
     public String toString() {
-        return " " + shortName + "";
+        return shortName;
     }
 }

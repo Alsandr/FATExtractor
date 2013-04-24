@@ -16,15 +16,22 @@ public class FAT32DIRElement {
     protected Integer DIR_Attr;
     protected Integer DIR_NTRes;
     protected Integer DIR_CrtTimeTenth;
-    protected Integer DIR_CrtTime;
-    protected Integer DIR_CrtDate;
-    protected Integer DIR_LstAccDate;
+    protected String DIR_CrtTime;
+    protected String DIR_CrtDate;
+    protected String DIR_LstAccDate;
     protected Integer DIR_FstClusHI;
-    protected Integer DIR_WrtTime;
-    protected Integer DIR_WrtDate;
+    protected String DIR_WrtTime;
+    protected String DIR_WrtDate;
     protected Integer DIR_FstClusLO;
     protected Integer DIR_FileSize;
+    protected Integer fileSize;
+    protected String fileSizeMod;
     protected Integer DIR_FstClusFULL;
+    
+    protected String crtTime;
+    protected String crtDate;
+    protected String wrtTime;
+    protected String wrtDate;
     
     protected byte[] numbersOfClusters;
         
@@ -135,8 +142,10 @@ public class FAT32DIRElement {
         byte[] bTemp = new byte[2];
         for (int i = 14;i < 16; i++) {
             bTemp[i-14] = bytesOfFAT32Element[i];
-        }        
-        DIR_CrtTime = byteArrayToInt(bTemp);
+        }
+        Integer temp = byteArrayToInt(bTemp);
+        
+        DIR_CrtTime = ((temp & 0b111110000000000) >> 10) + ":" + ((temp & 0b1111110000) >> 5) + "." + (temp & 0b1111) * 2;
     }
     
     /**
@@ -146,8 +155,11 @@ public class FAT32DIRElement {
         byte[] bTemp = new byte[2];
         for (int i = 16;i < 18; i++) {
             bTemp[i-16] = bytesOfFAT32Element[i];
-        }        
-        DIR_CrtDate = byteArrayToInt(bTemp);
+        }
+        
+        Integer temp = byteArrayToInt(bTemp);
+        
+        DIR_CrtDate = (temp & 0b11111) + "." + ((temp & 0b111100000) >> 5) + "." + (((temp & 0b1111111000000000) >> 9) + 1980);
     }
     
     /**
@@ -157,8 +169,9 @@ public class FAT32DIRElement {
         byte[] bTemp = new byte[2];
         for (int i = 18;i < 20; i++) {
             bTemp[i-18] = bytesOfFAT32Element[i];
-        }        
-        DIR_LstAccDate = byteArrayToInt(bTemp);
+        }     
+        Integer temp = byteArrayToInt(bTemp);
+        DIR_LstAccDate = (temp & 0b11111) + "." + ((temp & 0b111100000) >> 5) + "." + (((temp & 0b1111111000000000) >> 9) + 1980);
     }
     
     /**
@@ -168,7 +181,7 @@ public class FAT32DIRElement {
         byte[] bTemp = new byte[2];
         for (int i = 20;i < 22; i++) {
             bTemp[i-20] = bytesOfFAT32Element[i];
-        }        
+        }
         DIR_FstClusHI = byteArrayToInt(bTemp);
     }
     
@@ -179,8 +192,10 @@ public class FAT32DIRElement {
         byte[] bTemp = new byte[2];
         for (int i = 22;i < 24; i++) {
             bTemp[i-22] = bytesOfFAT32Element[i];
-        }        
-        DIR_WrtTime = byteArrayToInt(bTemp);
+        }
+        Integer temp = byteArrayToInt(bTemp);
+        
+        DIR_WrtTime = ((temp & 0b111110000000000) >> 10) + ":" + ((temp & 0b1111110000) >> 4) + "." + (temp & 0b1111) * 2;
     }
     
     /**
@@ -190,8 +205,9 @@ public class FAT32DIRElement {
         byte[] bTemp = new byte[2];
         for (int i = 24;i < 26; i++) {
             bTemp[i-24] = bytesOfFAT32Element[i];
-        }        
-        DIR_WrtDate = byteArrayToInt(bTemp);
+        }
+        Integer temp = byteArrayToInt(bTemp);
+        DIR_WrtDate =  (temp & 0b11111) + "." + ((temp & 0b111100000) >> 5) + "." + (((temp & 0b1111111000000000) >> 9) + 1980);        
     }
     
     /**
@@ -214,6 +230,13 @@ public class FAT32DIRElement {
             bTemp[i-28] = bytesOfFAT32Element[i];
         }        
         DIR_FileSize = byteArrayToInt(bTemp);
+        if (DIR_FileSize >= 1024) {
+            fileSize = DIR_FileSize / 1024;
+            fileSizeMod = "Кб";
+        } else {
+           fileSize = DIR_FileSize;
+           fileSizeMod = "байт"; 
+        }
     }
     
     /**
@@ -250,15 +273,15 @@ public class FAT32DIRElement {
         return DIR_CrtTimeTenth;
     }
 
-    public Integer getDIR_CrtTime() {
+    public String getDIR_CrtTime() {
         return DIR_CrtTime;
     }
 
-    public Integer getDIR_CrtDate() {
+    public String getDIR_CrtDate() {
         return DIR_CrtDate;
     }
 
-    public Integer getDIR_LstAccDate() {
+    public String getDIR_LstAccDate() {
         return DIR_LstAccDate;
     }
 
@@ -266,11 +289,11 @@ public class FAT32DIRElement {
         return DIR_FstClusHI;
     }
 
-    public Integer getDIR_WrtTime() {
+    public String getDIR_WrtTime() {
         return DIR_WrtTime;
     }
 
-    public Integer getDIR_WrtDate() {
+    public String getDIR_WrtDate() {
         return DIR_WrtDate;
     }
 
@@ -288,6 +311,6 @@ public class FAT32DIRElement {
     
     @Override
     public String toString() {
-        return shortName;
+        return shortName.trim() + "." + expansion + "   " + fileSize + " "+ fileSizeMod + "   " + DIR_CrtDate + "   " + DIR_CrtTime;
     }
 }

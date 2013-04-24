@@ -1,5 +1,6 @@
 package asandrc.gmail.com.extractor;
 
+import asandrc.gmail.com.data.FAT32DIRElement;
 import java.io.File;
 
 /**
@@ -10,8 +11,6 @@ public abstract class BaseExtractor {
     
     public abstract void openFAT(File FATfile);
     
-    public abstract void getFiles();
-    
-    public abstract void getFile(String path);    
+    public abstract byte[] extractFile(FAT32DIRElement f32DIRElement);
     
 }

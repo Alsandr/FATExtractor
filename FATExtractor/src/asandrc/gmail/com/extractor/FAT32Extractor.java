@@ -5,6 +5,7 @@ import asandrc.gmail.com.data.FAT32Directory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -61,6 +62,8 @@ public class FAT32Extractor extends BaseExtractor {
     
     private File image;
     private FileInputStream fs;
+    
+    private byte[] bytesOfF32DIRElement;
     
     private FAT32Directory rootElement;
     
@@ -148,7 +151,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[8];
         for (int i = 3;i < 11; i++) {
             bTemp[i-3] = imageBytes[i];
-        }        
+        }
         BS_OEMNAme = new String(bTemp, "UTF-8");
         System.out.println(BS_OEMNAme);
         return BS_OEMNAme;
@@ -162,7 +165,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[2];
         for (int i = 11;i < 13; i++) {
             bTemp[i-11] = imageBytes[i];
-        }        
+        }
         BPB_BytsPerSec = byteArrayToInt(bTemp);
         System.out.println("BPB_BytsPerSec = " + BPB_BytsPerSec);
         return BPB_BytsPerSec;
@@ -176,7 +179,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[1];
         for (int i = 13;i < 14; i++) {
             bTemp[i-13] = imageBytes[i];
-        }        
+        }
         BPB_SecPerClus = byteArrayToInt(bTemp);
         System.out.println("BPB_SecPerClus = " + BPB_SecPerClus);
         return BPB_SecPerClus;
@@ -190,7 +193,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[2];
         for (int i = 14;i < 16; i++) {
             bTemp[i-14] = imageBytes[i];
-        }        
+        }
         BPB_ReservedSecCnt = byteArrayToInt(bTemp);
         System.out.println("Количество секторов в Reserved region = " + BPB_ReservedSecCnt);
         return BPB_ReservedSecCnt;
@@ -204,7 +207,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[1];
         for (int i = 16;i < 17; i++) {
             bTemp[i-16] = imageBytes[i];
-        }        
+        }
         BPB_NumFATs = byteArrayToInt(bTemp);
         System.out.println("BPB_NumFATs = " + BPB_NumFATs);
         return BPB_NumFATs;
@@ -215,7 +218,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[2];
         for (int i = 17;i < 19; i++) {
             bTemp[i-17] = imageBytes[i];
-        }        
+        }
         BPB_RootEntCnt = byteArrayToInt(bTemp);
         System.out.println(BPB_RootEntCnt);
         return BPB_RootEntCnt;
@@ -229,7 +232,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[2];
         for (int i = 22;i < 24; i++) {
             bTemp[i-22] = imageBytes[i];
-        }        
+        }
         BPB_FATSz16 = byteArrayToInt(bTemp);
         System.out.println(BPB_FATSz16);
         return BPB_FATSz16;
@@ -239,7 +242,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[2];
         for (int i = 19;i < 21; i++) {
             bTemp[i-19] = imageBytes[i];
-        }        
+        }
         BPB_TotSec16 = byteArrayToInt(bTemp);
         System.out.println(BPB_TotSec16);
         return BPB_TotSec16;
@@ -253,7 +256,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[4];
         for (int i = 32;i < 36; i++) {
             bTemp[i-32] = imageBytes[i];
-        }        
+        }
         BPB_TotSec32 = byteArrayToInt(bTemp);
         System.out.println("Общее количество секторов = " + BPB_TotSec32);
         return BPB_TotSec32;
@@ -267,7 +270,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[4];
         for (int i = 36;i < 40; i++) {
             bTemp[i-36] = imageBytes[i];
-        }        
+        }
         BPB_FATSz32 = byteArrayToInt(bTemp);
         System.out.println("FATSz32 (количество секторов) = " + BPB_FATSz32);
         return BPB_FATSz32;
@@ -282,7 +285,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[2];
         for (int i = 42;i < 44; i++) {
             bTemp[i-42] = imageBytes[i];
-        }        
+        }
         BPB_FSVer = byteArrayToInt(bTemp);
         System.out.println("Номер версии FAT32 = " + BPB_FSVer);
         return BPB_FSVer;
@@ -296,7 +299,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[4];
         for (int i = 44;i < 48; i++) {
             bTemp[i-44] = imageBytes[i];
-        }        
+        }
         BPB_RootClus = byteArrayToInt(bTemp);
         System.out.println("Первый кластер корневой директории = " + BPB_RootClus);
         return BPB_RootClus;
@@ -310,7 +313,7 @@ public class FAT32Extractor extends BaseExtractor {
         byte[] bTemp = new byte[8];
         for (int i = 82;i < 90; i++) {
             bTemp[i-82] = imageBytes[i];
-        }        
+        }
         BPB_FilSysType = new String(bTemp, "UTF-8");
         System.out.println(BPB_FilSysType);
         return BPB_FilSysType;
@@ -398,7 +401,7 @@ public class FAT32Extractor extends BaseExtractor {
      * Вычисление входной точки в таблице FAT
      * @param N номер кластера
      */
-    public Integer calcThisFATEntOffset(int N) {
+    public void calcThisFATEntOffset(int N) {
         int FATOffset = 0;
         if (typeOfFileSystem.equalsIgnoreCase("FAT16")) {
             FATOffset = N * 2;
@@ -407,9 +410,6 @@ public class FAT32Extractor extends BaseExtractor {
         }
         thisFATSecNum = BPB_ReservedSecCnt + (FATOffset / BPB_BytsPerSec);
         thisFATEntOffset = FATOffset % BPB_BytsPerSec;
-        System.out.println("thisFATSecNum = " + thisFATSecNum);
-        System.out.println("thisFATEntOffset = " + thisFATEntOffset);
-        return thisFATSecNum;
     }
     
     public void searchFAT32Element() throws UnsupportedEncodingException {
@@ -427,7 +427,6 @@ public class FAT32Extractor extends BaseExtractor {
         System.out.println("firstDataByte = " + firstDataByte);
         
         buildHierarchy(rootElement, firstDataByte);
-        int g = 1;       
     }
     
     /**
@@ -465,23 +464,60 @@ public class FAT32Extractor extends BaseExtractor {
             i = byteOffset + (DIR_ELEMENT_SIZE * c); 
         }
     }
-    
+        
     @Override
-    public void getFiles() {
-//        for (FAT32DIRElement f32El: FAT32DIRElements) {
-//            System.out.println("-------------------");
-//            System.out.println(f32El.getShortName());
-//            System.out.println(f32El.getExpansion());
-//            System.out.println(f32El.getDIR_FstClusLO());
-//            System.out.println(f32El.getDIR_FileSize());
-//        }
+    public byte[] extractFile(FAT32DIRElement f32DIRElement) {
+        int countFileClusters = 0;
+        if (f32DIRElement.getDIR_FileSize() < BPB_BytsPerSec) {
+            countFileClusters = 1;
+        } else {
+            countFileClusters = f32DIRElement.getDIR_FileSize() / BPB_BytsPerSec + 1;
+        }
+        int c = 0;
+        bytesOfF32DIRElement = new byte[BPB_BytsPerSec * countFileClusters];
+        System.out.println("======================================");
+        System.out.println("Size of byteArr = " + bytesOfF32DIRElement.length);
+        checkEOF(f32DIRElement.getDIR_FstClusFULL(), bytesOfF32DIRElement, c);        
+        
+        return bytesOfF32DIRElement;
     }
     
-    @Override
-    public void getFile(String path) {
+    private void checkEOF(int N, byte[] bytesOfF32DIRElement, int countCl) {        
+        byte[] bTemp = readCluster(N);
         
+        System.out.println("countCL = " + countCl);
+        for (int i = 0; i < BPB_BytsPerSec; i++) {
+            bytesOfF32DIRElement[i + countCl * BPB_BytsPerSec] = bTemp[i];
+        }
+        calcThisFATEntOffset(N);
+        byte[] bCheckEOF = new byte[4];
+        
+        int beginOffset = thisFATSecNum * BPB_BytsPerSec + thisFATEntOffset;
+        int endOffset = thisFATSecNum * BPB_BytsPerSec + thisFATEntOffset + 4;
+        System.out.println("FAT offset = " + beginOffset);
+        for (int j = beginOffset; j < endOffset; j++) {
+            System.out.println(j - beginOffset);
+            bCheckEOF[j - beginOffset] = imageBytes[j];
+        }
+        int resultEOF = byteArrayToInt(bCheckEOF);
+        System.out.println("Cluster value = " + resultEOF);
+        if (resultEOF >= 0x0FFFFFFF) {
+            
+        } else {
+            countCl++;
+            checkEOF(resultEOF, bytesOfF32DIRElement, countCl);
+        }
     }
 
+    private byte[] readCluster(int clusterNum) {
+        byte[] bytesOfCluster = new byte[BPB_BytsPerSec];
+        int firstByteOfCluster = (clusterNum + firstDataSector - 2) * BPB_BytsPerSec;
+        for (int i = firstByteOfCluster; i < firstByteOfCluster + BPB_BytsPerSec; i++) {
+            bytesOfCluster[i-firstByteOfCluster] = imageBytes[i];
+        }
+        return bytesOfCluster;
+    }
+    
     public String getBS_OEMNAme() {
         return BS_OEMNAme;
     }
