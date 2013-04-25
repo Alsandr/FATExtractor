@@ -395,7 +395,10 @@ public class MainFrame extends javax.swing.JFrame {
      */
     private void aboutItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_aboutItemActionPerformed
         JOptionPane.showMessageDialog(this, "FATExtractor предназначен для просмотра "
-                + "содержимого\nи извлечения файлов из томов с файловой системой FAT32");
+                + "содержимого\nи извлечения файлов из томов с файловой системой FAT32\n"
+                + "\n"
+                + "Чечко Александр Игоревич\n"
+                + "asandrc@gmail.com");
     }//GEN-LAST:event_aboutItemActionPerformed
 
     /**
