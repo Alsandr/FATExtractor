@@ -1,7 +1,7 @@
-package asandrc.gmail.com.main;
+package com.gmail.asandrc.main;
 
-import asandrc.gmail.com.extractor.FAT32Extractor;
-import asandrc.gmail.com.view.MainFrame;
+import com.gmail.asandrc.extractor.FAT32Extractor;
+import com.gmail.asandrc.view.MainFrame;
 import java.io.IOException;
 import javax.swing.UIManager;
 

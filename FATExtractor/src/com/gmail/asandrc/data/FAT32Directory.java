@@ -1,4 +1,4 @@
-package asandrc.gmail.com.data;
+package com.gmail.asandrc.data;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;

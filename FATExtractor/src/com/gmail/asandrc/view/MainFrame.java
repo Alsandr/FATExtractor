@@ -1,9 +1,11 @@
-package asandrc.gmail.com.view;
+package com.gmail.asandrc.view;
 
-import asandrc.gmail.com.data.FAT32DIRElement;
-import asandrc.gmail.com.data.FAT32Directory;
-import asandrc.gmail.com.data.FAT32DirectoryTreeNode;
-import asandrc.gmail.com.extractor.FAT32Extractor;
+import com.gmail.asandrc.data.FAT32DIRElement;
+import com.gmail.asandrc.data.FAT32Directory;
+import com.gmail.asandrc.data.FAT32DirectoryTreeNode;
+import com.gmail.asandrc.extractor.BaseExtractor;
+import com.gmail.asandrc.extractor.ExtractorFactory;
+import com.gmail.asandrc.extractor.FAT32Extractor;
 import java.awt.Component;
 import java.awt.Font;
 import java.io.File;
@@ -30,7 +32,8 @@ import javax.swing.tree.DefaultTreeCellRenderer;
  */
 public class MainFrame extends javax.swing.JFrame {
 
-    private FAT32Extractor fat32Extractor;
+    private BaseExtractor extractor;
+    private ExtractorFactory extractorFactory;
     
     private String menuOpenIconPath = "resources/icons/package.png";
     private String menuCloseIconPath = "resources/icons/stop.png";
@@ -55,8 +58,8 @@ public class MainFrame extends javax.swing.JFrame {
      * Creates new form MainFrame
      */
     public MainFrame() {
+        extractorFactory = new ExtractorFactory();
         initComponents();
-        fat32Extractor = new FAT32Extractor();
         jTree = new JTree();
         jTree.setModel(null);        
         if (menuOpenIconPath != null && menuOpenIconPath != null
@@ -84,13 +87,13 @@ public class MainFrame extends javax.swing.JFrame {
      */
     private void getInfo() {
         infoTextArea.setText("");
-        infoTextArea.append(" Тип FAT: " + fat32Extractor.getTypeOfFileSystem());
-        infoTextArea.append("\n BS_OEMNAME: " + fat32Extractor.getBS_OEMNAme());
-        infoTextArea.append("\n FAT таблиц: " + fat32Extractor.getBPB_NumFATs().toString());
-        infoTextArea.append("\n Байтов в секторе: " + fat32Extractor.getBPB_BytsPerSec().toString());
-        infoTextArea.append("\n Секторов в кластере: " + fat32Extractor.getBPB_SecPerClus().toString());        
-        infoTextArea.append("\n Количество кластеров: " + fat32Extractor.getCountOfClusters().toString());
-        int size = fat32Extractor.getCountOfClusters() * fat32Extractor.getBPB_BytsPerSec();
+        infoTextArea.append(" Тип FAT: " + extractor.getTypeOfFileSystem());
+        infoTextArea.append("\n BS_OEMNAME: " + extractor.getBS_OEMNAme());
+        infoTextArea.append("\n FAT таблиц: " + extractor.getBPB_NumFATs().toString());
+        infoTextArea.append("\n Байтов в секторе: " + extractor.getBPB_BytsPerSec().toString());
+        infoTextArea.append("\n Секторов в кластере: " + extractor.getBPB_SecPerClus().toString());        
+        infoTextArea.append("\n Количество кластеров: " + extractor.getCountOfClusters().toString());
+        int size = extractor.getCountOfClusters() * extractor.getBPB_BytsPerSec();
         String dim = "";
         if (size >= 1024) {
             size /= 1024;
@@ -263,7 +266,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         openItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         openItem.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        openItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/asandrc/gmail/com/view/resources/icons/package.png"))); // NOI18N
+        openItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/gmail/asandrc/view/resources/icons/package.png"))); // NOI18N
         openItem.setText("Открыть файл");
         openItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -274,7 +277,7 @@ public class MainFrame extends javax.swing.JFrame {
         FileMenu.add(jSeparator1);
 
         closeItem.setFont(new java.awt.Font("Calibri", 0, 11)); // NOI18N
-        closeItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/asandrc/gmail/com/view/resources/icons/stop.png"))); // NOI18N
+        closeItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/gmail/asandrc/view/resources/icons/stop.png"))); // NOI18N
         closeItem.setText("Выход");
         closeItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -409,7 +412,7 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Файл не выбран");
         } else {
             if ((extractedFile.getDIR_Attr() 
-                    & fat32Extractor.getATTR_DIRECTORY()) == fat32Extractor.getATTR_DIRECTORY()) {
+                    & extractor.getATTR_DIRECTORY()) == extractor.getATTR_DIRECTORY()) {
                 JOptionPane.showMessageDialog(this, "Нельзя извлекать директории в данной версии программы");
             } else {
                 JFileChooser fileChooser = new JFileChooser();
@@ -421,7 +424,7 @@ public class MainFrame extends javax.swing.JFrame {
                             + "/" + extractedFile.getShortName().trim() + "." + extractedFile.getExpansion());
                     try {
                         FileOutputStream os = new FileOutputStream(newF);
-                        os.write(fat32Extractor.extractFile(extractedFile));
+                        os.write(extractor.extractFile(extractedFile));
                         os.close();
                         setExtractStatusSuccess(fileChooser.getCurrentDirectory().getAbsolutePath()
                             + "\\" + extractedFile.getShortName().trim() + "." + extractedFile.getExpansion());
@@ -462,9 +465,12 @@ public class MainFrame extends javax.swing.JFrame {
         JFileChooser fileChooser = new JFileChooser("./");
         int answer = fileChooser.showDialog(null, "Октрыть файл FAT");
         if (answer == JFileChooser.APPROVE_OPTION) {
-            boolean checkFAT = fat32Extractor.openFAT(fileChooser.getSelectedFile());
+            extractor = new BaseExtractor();
+            boolean checkFAT = extractor.openFAT(fileChooser.getSelectedFile());
+            extractor = extractorFactory.createExtractor(extractor.getCountOfClusters());
+            extractor.openFAT(fileChooser.getSelectedFile());
             if (checkFAT) {
-                buildTree(fat32Extractor.getRootElement());
+                buildTree(extractor.getRootElement());
                 getInfo();
                 setOpenSuccessStatus();
             } else {

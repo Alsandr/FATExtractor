@@ -1,4 +1,4 @@
-package asandrc.gmail.com.data;
+package com.gmail.asandrc.data;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
@@ -40,7 +40,7 @@ public class FAT32DIRElement {
     /**
      * Преобразует массив байтов в целое число
      * @param bytes
-     * @return 
+     * @return result
      */
     protected int byteArrayToInt(byte[] bytes) {
         int result = 0;
@@ -51,7 +51,7 @@ public class FAT32DIRElement {
         }
         return result;
     }
-    
+        
     /**
      * Конструктор
      * @param bytes массив байтов элемента FAT32
